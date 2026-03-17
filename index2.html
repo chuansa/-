@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智慧农业助手</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.8/dist/chart.umd.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#4CAF50',
+                        'primary-light': '#81C784',
+                        'primary-dark': '#2E7D32',
+                        secondary: '#4FC3F7',
+                        'secondary-light': '#81D4FA',
+                        'secondary-dark': '#0288D1',
+                        neutral: {
+                            100: '#F5F5F5',
+                            200: '#EEEEEE',
+                            300: '#E0E0E0',
+                            400: '#BDBDBD',
+                            500: '#9E9E9E',
+                            600: '#757575',
+                            700: '#616161',
+                            800: '#424242',
+                            900: '#212121',
+                        }
+                    },
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'card': '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                        'card-hover': '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                    }
+                },
+            }
+        }
+    </script>
+    
+    <style type="text/tailwindcss">
+        @layer utilities {
+            .content-auto {
+                content-visibility: auto;
+            }
+            .card-transition {
+                transition: all 0.3s ease;
+            }
+            .btn-primary {
+                @apply bg-primary hover:bg-primary-dark text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5;
+            }
+            .btn-secondary {
+                @apply bg-secondary hover:bg-secondary-dark text-white font-medium py-2 px-4 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-0.5;
+            }
+            .nav-item {
+                @apply flex flex-col items-center justify-center px-5 py-2 text-neutral-500 hover:text-primary transition-colors duration-300;
+            }
+            .nav-item-active {
+                @apply text-primary border-t-2 border-primary;
+            }
+            .sensor-card {
+                @apply bg-white rounded-xl shadow-card card-transition hover:shadow-card-hover p-4 mb-4;
+            }
+            .chart-container {
+                @apply bg-white rounded-xl shadow-card p-4 mb-4;
+            }
+        }
+    </style>
+</head>
+<body class="font-inter bg-neutral-100 min-h-screen flex flex-col">
+    <!-- 登录页面 -->
+    <div id="login-page" class="flex flex-col items-center justify-center min-h-screen px-4 py-8 bg-gradient-to-br from-primary-light to-secondary-light">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 transform transition-all duration-500 hover:scale-[1.01]">
+            <div class="text-center mb-8">
+                <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-primary-dark mb-2">智慧农业助手</h1>
+                <p class="text-neutral-600">便捷管理您的农作物和设备</p>
+            </div>
+            
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label for="username" class="block text-sm font-medium text-neutral-700 mb-1">用户名</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
+                            <i class="fa fa-user"></i>
+                        </span>
+                        <input type="text" id="username" class="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" placeholder="请输入用户名">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="password" class="block text-sm font-medium text-neutral-700 mb-1">密码</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
+                            <i class="fa fa-lock"></i>
+                        </span>
+                        <input type="password" id="password" class="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" placeholder="请输入密码">
+                    </div>
+                </div>
+                
+                <div>
+                    <button type="button" id="login-btn" class="btn-primary w-full">
+                        <i class="fa fa-sign-in mr-2"></i>登录
+                    </button>
+                </div>
+                
+                <div class="text-center">
+                    <span class="text-neutral-600">还没有账号？</span>
+                    <button type="button" id="register-link" class="text-primary hover:text-primary-dark font-medium ml-1 transition-colors">立即注册</button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="mt-8 text-neutral-700 text-sm">
+            <p>© 2025 智慧农业助手. 保留所有权利.</p>
+        </div>
+    </div>
+    
+    <!-- 注册页面 -->
+    <div id="register-page" class="hidden flex flex-col items-center justify-center min-h-screen px-4 py-8 bg-gradient-to-br from-primary-light to-secondary-light">
+        <div class="w-full max-w-md bg-white rounded-2xl shadow-xl p-8 transform transition-all duration-500 hover:scale-[1.01]">
+            <div class="text-center mb-8">
+                <h1 class="text-[clamp(1.8rem,4vw,2.5rem)] font-bold text-primary-dark mb-2">注册账号</h1>
+                <p class="text-neutral-600">创建您的智慧农业账户</p>
+            </div>
+            
+            <form id="register-form" class="space-y-5">
+                <div>
+                    <label for="register-name" class="block text-sm font-medium text-neutral-700 mb-1">姓名</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
+                            <i class="fa fa-user"></i>
+                        </span>
+                        <input type="text" id="register-name" class="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" placeholder="请输入您的姓名">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="register-phone" class="block text-sm font-medium text-neutral-700 mb-1">手机号</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
+                            <i class="fa fa-phone"></i>
+                        </span>
+                        <input type="tel" id="register-phone" class="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" placeholder="请输入您的手机号">
+                    </div>
+                </div>
+                
+                <div>
+                    <label for="register-password" class="block text-sm font-medium text-neutral-700 mb-1">密码</label>
+                    <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
+                            <i class="fa fa-lock"></i>
+                        </span>
+                        <input type="password" id="register-password" class="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all" placeholder="请设置密码">
+                    </div>
+                </div>
+                
+                <div>
+                    <button type="button" id="register-btn" class="btn-primary w-full">
+                        <i class="fa fa-user-plus mr-2"></i>注册
+                    </button>
+                </div>
+                
+                <div class="text-center">
+                    <span class="text-neutral-600">已有账号？</span>
+                    <button type="button" id="login-link" class="text-primary hover:text-primary-dark font-medium ml-1 transition-colors">返回登录</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- 主应用 -->
+    <div id="app" class="hidden flex flex-col min-h-screen">
+        <!-- 顶部导航栏 -->
+        <header class="bg-primary text-white shadow-md fixed top-0 left-0 right-0 z-10 transition-all duration-300">
+            <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+                <h1 class="text-xl font-bold">智慧农业助手</h1>
+                <div class="flex items-center space-x-3">
+                    <button id="search-btn" class="p-2 rounded-full hover:bg-primary-dark transition-colors">
+                        <i class="fa fa-search"></i>
+                    </button>
+                    <button id="notifications-btn" class="p-2 rounded-full hover:bg-primary-dark transition-colors relative">
+                        <i class="fa fa-bell"></i>
+                        <span class="absolute top-0 right-0 h-4 w-4 bg-red-500 rounded-full flex items-center justify-center text-[10px]">3</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+        
+        <!-- 内容区域 -->
+        <main class="flex-grow pt-16 pb-20">
+            <!-- 首页 -->
+            <div id="home-page" class="container mx-auto px-4 py-6">
+                <div class="mb-6">
+                    <h2 class="text-[clamp(1.5rem,3vw,2rem)] font-bold text-neutral-800">欢迎回来，王师傅</h2>
+                    <p class="text-neutral-600">今天是 <span id="current-date"></span></p>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div class="bg-white rounded-xl shadow-card p-4 flex items-center">
+                        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-leaf text-primary text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-neutral-500 text-sm">农作物</p>
+                            <p class="text-neutral-800 font-bold text-xl">4</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-card p-4 flex items-center">
+                        <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-microchip text-secondary text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-neutral-500 text-sm">传感器</p>
+                            <p class="text-neutral-800 font-bold text-xl">7</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-card p-4 flex items-center">
+                        <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-tint text-primary text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-neutral-500 text-sm">浇灌系统</p>
+                            <p class="text-neutral-800 font-bold text-xl">2</p>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-card p-4 flex items-center">
+                        <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mr-3">
+                            <i class="fa fa-book text-secondary text-xl"></i>
+                        </div>
+                        <div>
+                            <p class="text-neutral-500 text-sm">知识文章</p>
+                            <p class="text-neutral-800 font-bold text-xl">12</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-neutral-800">我的农作物</h3>
+                        <button class="text-primary hover:text-primary-dark transition-colors">查看全部</button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white rounded-xl shadow-card card-transition hover:shadow-card-hover overflow-hidden cursor-pointer" onclick="navigateTo('crop-detail')">
+                            <div class="h-40 bg-primary/20 relative">
+                                <img src="./微信图片_20250608233416.jpg" alt="金银花" class="w-full h-full object-cover">
+                                <div class="absolute top-2 right-2 bg-primary text-white text-xs px-2 py-1 rounded-full">生长良好</div>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-semibold text-neutral-800 mb-1">金银花</h4>
+                                <div class="flex justify-between text-sm mb-3">
+                                    <div>
+                                        <span class="text-neutral-500">温度:</span>
+                                        <span class="text-neutral-800">25°C</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-neutral-500">湿度:</span>
+                                        <span class="text-neutral-800">65%</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-neutral-500">土壤:</span>
+                                        <span class="text-neutral-800">湿润</span>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-neutral-500">上次更新: 10分钟前</span>
+                                    <button class="text-primary hover:text-primary-dark transition-colors">
+                                        <i class="fa fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-card card-transition hover:shadow-card-hover overflow-hidden cursor-pointer" onclick="navigateTo('crop-detail')">
+                            <div class="h-40 bg-primary/20 relative">
+                                <img src="./90.jpg" alt="小麦" class="w-full h-full object-cover">
+                                <div class="absolute top-2 right-2 bg-yellow-500 text-white text-xs px-2 py-1 rounded-full">需要关注</div>
+                            </div>
+                            <div class="p-4">
+                                <h4 class="font-semibold text-neutral-800 mb-1">小麦</h4>
+                                <div class="flex justify-between text-sm mb-3">
+                                    <div>
+                                        <span class="text-neutral-500">温度:</span>
+                                        <span class="text-neutral-800">28°C</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-neutral-500">湿度:</span>
+                                        <span class="text-neutral-800">45%</span>
+                                    </div>
+                                    <div>
+                                        <span class="text-neutral-500">土壤:</span>
+                                        <span class="text-neutral-800">干燥</span>
+                                    </div>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-neutral-500">上次更新: 15分钟前</span>
+                                    <button class="text-primary hover:text-primary-dark transition-colors">
+                                        <i class="fa fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-neutral-800">快速操作</h3>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-white rounded-xl shadow-card p-4 text-center card-transition hover:shadow-card-hover cursor-pointer" onclick="navigateTo('sensors')">
+                            <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fa fa-microchip text-primary text-xl"></i>
+                            </div>
+                            <p class="font-medium text-neutral-800">传感器管理</p>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-card p-4 text-center card-transition hover:shadow-card-hover cursor-pointer" onclick="navigateTo('irrigation')">
+                            <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fa fa-tint text-secondary text-xl"></i>
+                            </div>
+                            <p class="font-medium text-neutral-800">浇灌系统</p>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-card p-4 text-center card-transition hover:shadow-card-hover cursor-pointer" onclick="navigateTo('knowledge')">
+                            <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fa fa-book text-primary text-xl"></i>
+                            </div>
+                            <p class="font-medium text-neutral-800">知识培训</p>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-card p-4 text-center card-transition hover:shadow-card-hover cursor-pointer" onclick="navigateTo('profile')">
+                            <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-3">
+                                <i class="fa fa-user text-secondary text-xl"></i>
+                            </div>
+                            <p class="font-medium text-neutral-800">个人中心</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-neutral-800">最新知识</h3>
+                        <button class="text-primary hover:text-primary-dark transition-colors">查看全部</button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="bg-white rounded-xl shadow-card p-4 flex card-transition hover:shadow-card-hover cursor-pointer">
+                            <img src="./微信图片_20250608233434.jpg" alt="金银花种植技巧" class="w-20 h-20 rounded-lg object-cover mr-4">
+                            <div>
+                                <h4 class="font-medium text-neutral-800 mb-1">金银花高效种植技巧与管理方法</h4>
+                                <p class="text-sm text-neutral-600 mb-2 line-clamp-2">本文详细介绍了金银花的高效种植技术，包括土壤选择、播种时间、施肥管理和病虫害防治等方面的专业知识...</p>
+                                <div class="flex items-center text-xs text-neutral-500">
+                                    <span>2025-05-10</span>
+                                    <span class="mx-2">•</span>
+                                    <span>种植技术</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-card p-4 flex card-transition hover:shadow-card-hover cursor-pointer">
+                            <img src="https://picsum.photos/seed/knowledge2/100/100" alt="智能农业设备" class="w-20 h-20 rounded-lg object-cover mr-4">
+                            <div>
+                                <h4 class="font-medium text-neutral-800 mb-1">智能农业设备的选型与应用指南</h4>
+                                <p class="text-sm text-neutral-600 mb-2 line-clamp-2">如何选择适合自己农场的智能传感器和灌溉系统？本文从实际应用角度出发，为您提供专业的设备选型建议...</p>
+                                <div class="flex items-center text-xs text-neutral-500">
+                                    <span>2025-05-08</span>
+                                    <span class="mx-2">•</span>
+                                    <span>设备管理</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 农作物详情页面 -->
+            <div id="crop-detail-page" class="hidden container mx-auto px-4 py-6">
+                <div class="mb-6">
+                    <button id="back-to-home" class="flex items-center text-neutral-600 hover:text-primary mb-4 transition-colors">
+                        <i class="fa fa-arrow-left mr-2"></i>
+                        <span>返回首页</span>
+                    </button>
+                    
+                    <div class="bg-white rounded-xl shadow-card overflow-hidden">
+                        <div class="h-60 relative">
+                            <img src="./微信图片_20250608233440.jpg" alt="金银花" class="w-full h-full object-cover">
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end">
+                                <div class="p-6">
+                                    <h2 class="text-2xl font-bold text-white mb-1">金银花</h2>
+                                    <p class="text-white/80">品种: 山银花</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                                <div class="bg-neutral-100 rounded-lg p-4">
+                                    <h4 class="text-neutral-500 text-sm mb-2">温度要求</h4>
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-2xl font-bold text-neutral-800">15-30°C</p>
+                                            <p class="text-sm text-neutral-600">当前: 25°C</p>
+                                        </div>
+                                        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                                            <i class="fa fa-thermometer-half text-primary text-xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-neutral-100 rounded-lg p-4">
+                                    <h4 class="text-neutral-500 text-sm mb-2">湿度要求</h4>
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-2xl font-bold text-neutral-800">50-70%</p>
+                                            <p class="text-sm text-neutral-600">当前: 65%</p>
+                                        </div>
+                                        <div class="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center">
+                                            <i class="fa fa-tint text-secondary text-xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="bg-neutral-100 rounded-lg p-4">
+                                    <h4 class="text-neutral-500 text-sm mb-2">光照要求</h4>
+                                    <div class="flex justify-between items-center">
+                                        <div>
+                                            <p class="text-2xl font-bold text-neutral-800">6-8小时</p>
+                                            <p class="text-sm text-neutral-600">当前: 7小时</p>
+                                        </div>
+                                        <div class="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                                            <i class="fa fa-sun text-primary text-xl"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold text-neutral-800 mb-4">环境数据趋势</h3>
+                                <div class="chart-container">
+                                    <canvas id="environment-chart" height="200"></canvas>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <h3 class="text-lg font-semibold text-neutral-800 mb-4">浇灌系统</h3>
+                                <div class="bg-white rounded-xl shadow-card p-4">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h4 class="font-medium text-neutral-800">系统状态</h4>
+                                        <div class="flex items-center">
+                                            <span class="text-green-500 mr-2">运行中</span>
+                                            <label class="relative inline-flex items-center cursor-pointer">
+                                                <input type="checkbox" checked class="sr-only peer">
+                                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex justify-between mb-4">
+                                        <div>
+                                            <p class="text-neutral-500 text-sm">工作模式</p>
+                                            <p class="font-medium text-neutral-800">自动模式</p>
+                                        </div>
+                                        <div>
+                                            <p class="text-neutral-500 text-sm">上次浇水</p>
+                                            <p class="font-medium text-neutral-800">今天 08:30</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex space-x-4">
+                                        <button class="btn-primary flex-1">
+                                            <i class="fa fa-play mr-2"></i>立即浇水
+                                        </button>
+                                        <button class="btn-secondary flex-1">
+                                            <i class="fa fa-cog mr-2"></i>设置计划
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-semibold text-neutral-800 mb-4">种植建议</h3>
+                                <div class="bg-neutral-100 rounded-lg p-4">
+                                    <p class="text-neutral-800 mb-2">根据当前环境数据，为您提供以下种植建议：</p>
+                                    <ul class="list-disc list-inside text-neutral-600 space-y-1">
+                                        <li>当前温度适宜，保持现有管理方式。</li>
+                                        <li>湿度略高，注意通风，预防病虫害。</li>
+                                        <li>建议在未来24小时内进行适量灌溉。</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 传感器管理页面 -->
+            <div id="sensors-page" class="hidden container mx-auto px-4 py-6">
+                <div class="mb-6">
+                    <button id="back-to-home-sensors" class="flex items-center text-neutral-600 hover:text-primary mb-4 transition-colors">
+                        <i class="fa fa-arrow-left mr-2"></i>
+                        <span>返回首页</span>
+                    </button>
+                    
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-2xl font-bold text-neutral-800">传感器管理</h2>
+                        <button class="btn-primary">
+                            <i class="fa fa-plus mr-2"></i>添加传感器
+                        </button>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="sensor-card">
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fa fa-thermometer-half text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-neutral-800">温度传感器 A1</h4>
+                                        <p class="text-sm text-neutral-500">位置: 金银花种植区</p>
+                                    </div>
+                                </div>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">在线</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <p class="text-sm text-neutral-500">当前温度</p>
+                                    <p class="text-lg font-semibold text-neutral-800">25°C</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-neutral-500">最后更新</p>
+                                    <p class="text-lg font-semibold text-neutral-800">10分钟前</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <p class="text-sm text-neutral-500">电量</p>
+                                <div class="w-full bg-neutral-200 rounded-full h-2.5 mb-1">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 75%"></div>
+                                </div>
+                                <p class="text-xs text-neutral-600">75%</p>
+                            </div>
+                            
+                            <div class="flex justify-end mt-4 space-x-2">
+                                <button class="text-neutral-500 hover:text-primary transition-colors p-2">
+                                    <i class="fa fa-edit"></i>
+                                </button>
+                                <button class="text-neutral-500 hover:text-red-500 transition-colors p-2">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="sensor-card">
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-secondary/10 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fa fa-tint text-secondary"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-neutral-800">湿度传感器 B1</h4>
+                                        <p class="text-sm text-neutral-500">位置: 金银花种植区</p>
+                                    </div>
+                                </div>
+                                <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">在线</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <p class="text-sm text-neutral-500">当前湿度</p>
+                                    <p class="text-lg font-semibold text-neutral-800">65%</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-neutral-500">最后更新</p>
+                                    <p class="text-lg font-semibold text-neutral-800">10分钟前</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <p class="text-sm text-neutral-500">电量</p>
+                                <div class="w-full bg-neutral-200 rounded-full h-2.5 mb-1">
+                                    <div class="bg-green-500 h-2.5 rounded-full" style="width: 82%"></div>
+                                </div>
+                                <p class="text-xs text-neutral-600">82%</p>
+                            </div>
+                            
+                            <div class="flex justify-end mt-4 space-x-2">
+                                <button class="text-neutral-500 hover:text-primary transition-colors p-2">
+                                    <i class="fa fa-edit"></i>
+                                </button>
+                                <button class="text-neutral-500 hover:text-red-500 transition-colors p-2">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="sensor-card">
+                            <div class="flex justify-between items-center mb-3">
+                                <div class="flex items-center">
+                                    <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fa fa-tint text-primary"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-neutral-800">土壤湿度传感器 C1</h4>
+                                        <p class="text-sm text-neutral-500">位置: 小麦种植区</p>
+                                    </div>
+                                </div>
+                                <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">离线</span>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <p class="text-sm text-neutral-500">最后记录</p>
+                                    <p class="text-lg font-semibold text-neutral-800">45%</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-neutral-500">最后更新</p>
+                                    <p class="text-lg font-semibold text-neutral-800">2天前</p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <p class="text-sm text-neutral-500">电量</p>
+                                <div class="w-full bg-neutral-200 rounded-full h-2.5 mb-1">
+                                    <div class="bg-red-500 h-2.5 rounded-full" style="width: 10%"></div>
+                                </div>
+                                <p class="text-xs text-neutral-600">10% (需要充电)</p>
+                            </div>
+                            
+                            <div class="flex justify-end mt-4 space-x-2">
+                                <button class="text-neutral-500 hover:text-primary transition-colors p-2">
+                                    <i class="fa fa-edit"></i>
+                                </button>
+                                <button class="text-neutral-500 hover:text-red-500 transition-colors p-2">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 浇灌系统管理页面 -->
+            <div id="irrigation-page" class="hidden container mx-auto px-4 py-6">
+                <div class="mb-6">
+                    <button id="back-to-home-irrigation" class="flex items-center text-neutral-600 hover:text-primary mb-4 transition-colors">
+                        <i class="fa fa-arrow-left mr-2"></i>
+                        <span>返回首页</span>
+                    </button>
+                    
+                    <div class="bg-white rounded-xl shadow-card p-6 mb-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h2 class="text-2xl font-bold text-neutral-800">浇灌系统管理</h2>
+                            <div class="flex items-center">
+                                <span class="text-green-500 mr-2">运行中</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                            <div class="bg-neutral-100 rounded-lg p-4">
+                                <h4 class="text-neutral-500 text-sm mb-2">当前模式</h4>
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fa fa-cogs text-primary text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-2xl font-bold text-neutral-800">自动模式</p>
+                                        <p class="text-sm text-neutral-600">根据传感器数据自动灌溉</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-neutral-100 rounded-lg p-4">
+                                <h4 class="text-neutral-500 text-sm mb-2">下一次灌溉</h4>
+                                <div class="flex items-center">
+                                    <div class="w-12 h-12 bg-secondary/10 rounded-full flex items-center justify-center mr-3">
+                                        <i class="fa fa-clock text-secondary text-xl"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-2xl font-bold text-neutral-800">明天 06:00</p>
+                                        <p class="text-sm text-neutral-600">预计持续 30 分钟</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-6">
+                            <h3 class="text-lg font-semibold text-neutral-800 mb-4">历史记录</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full">
+                                    <thead>
+                                        <tr class="bg-neutral-100">
+                                            <th class="py-3 px-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">日期</th>
+                                            <th class="py-3 px-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">开始时间</th>
+                                            <th class="py-3 px-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">结束时间</th>
+                                            <th class="py-3 px-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">持续时间</th>
+                                            <th class="py-3 px-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">用水量</th>
+                                            <th class="py-3 px-4 text-left text-xs font-medium text-neutral-500 uppercase tracking-wider">模式</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-neutral-200">
+                                        <tr>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">2025-05-16</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">08:30</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">08:45</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">15分钟</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">300升</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">自动</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">2025-05-15</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">06:00</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">06:30</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">30分钟</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">600升</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">自动</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">2025-05-14</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">16:45</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">17:00</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">15分钟</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">300升</td>
+                                            <td class="py-3 px-4 text-sm text-neutral-800">手动</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-4">
+                            <button class="btn-primary flex-1">
+                                <i class="fa fa-play mr-2"></i>立即浇水
+                            </button>
+                            <button class="btn-secondary flex-1">
+                                <i class="fa fa-calendar-plus mr-2"></i>添加计划
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-neutral-800 mb-4">浇灌计划</h3>
+                        <div class="bg-white rounded-xl shadow-card p-4 mb-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <div>
+                                    <h4 class="font-medium text-neutral-800">日常灌溉</h4>
+                                    <p class="text-sm text-neutral-500">每天 06:00 - 06:30</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <p class="text-sm text-neutral-500">灌溉区域</p>
+                                    <p class="font-medium text-neutral-800">全部区域</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-neutral-500">用水量</p>
+                                    <p class="font-medium text-neutral-800">600升</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end space-x-2">
+                                <button class="text-neutral-500 hover:text-primary transition-colors p-2">
+                                    <i class="fa fa-edit"></i>
+                                </button>
+                                <button class="text-neutral-500 hover:text-red-500 transition-colors p-2">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl shadow-card p-4">
+                            <div class="flex justify-between items-center mb-3">
+                                <div>
+                                    <h4 class="font-medium text-neutral-800">补充灌溉</h4>
+                                    <p class="text-sm text-neutral-500">每周三、周六 18:00 - 18:15</p>
+                                </div>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" checked class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <p class="text-sm text-neutral-500">灌溉区域</p>
+                                    <p class="font-medium text-neutral-800">小麦种植区</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-neutral-500">用水量</p>
+                                    <p class="font-medium text-neutral-800">200升</p>
+                                </div>
+                            </div>
+                            
+                            <div class="flex justify-end space-x-2">
+                                <button class="text-neutral-500 hover:text-primary transition-colors p-2">
+                                    <i class="fa fa-edit"></i>
+                                </button>
+                                <button class="text-neutral-500 hover:text-red-500 transition-colors p-2">
+                                    <i class="fa fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 知识培训页面 -->
+            <div id="knowledge-page" class="hidden container mx-auto px-4 py-6">
+                <div class="mb-6">
+                    <button id="back-to-home-knowledge" class="flex items-center text-neutral-600 hover:text-primary mb-4 transition-colors">
+                        <i class="fa fa-arrow-left mr-2"></i>
+                        <span>返回首页</span>
+                    </button>
+                    
+                    <div class="mb-6">
+                        <h2 class="text-2xl font-bold text-neutral-800 mb-2">知识培训</h2>
+                        <p class="text-neutral-600">探索专业农业知识，提升种植技能</p>
+                    </div>
+                    
+                    <div class="relative mb-6">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-neutral-500">
+                            <i class="fa fa-search"></i>
+                        </span>
+                        <input type="text" placeholder="搜索知识内容..." class="w-full pl-10 pr-4 py-3 border border-neutral-300 rounded-lg focus:ring-2 focus:ring-primary/50 focus:border-primary outline-none transition-all">
+                    </div>
+                    
+                    <div class="flex overflow-x-auto space-x-4 mb-6 pb-2">
+                        <button class="whitespace-nowrap bg-primary text-white px-4 py-2 rounded-full text-sm">全部</button>
+                        <button class="whitespace-nowrap bg-white text-neutral-700 px-4 py-2 rounded-full text-sm shadow-sm hover:shadow-md transition-shadow">种植技术</button>
+                        <button class="whitespace-nowrap bg-white text-neutral-700 px-4 py-2 rounded-full text-sm shadow-sm hover:shadow-md transition-shadow">病虫害防治</button>
+                        <button class="whitespace-nowrap bg-white text-neutral-700 px-4 py-2 rounded-full text-sm shadow-sm hover:shadow-md transition-shadow">设备使用</button>
+                        <button class="whitespace-nowrap bg-white text-neutral-700 px-4 py-2 rounded-full text-sm shadow-sm hover:shadow-md transition-shadow">灌溉管理</button>
+                        <button class="whitespace-nowrap bg-white text-neutral-700 px-4 py-2 rounded-full text-sm shadow-sm hover:shadow-md transition-shadow">土壤肥料</button>
+                    </div>
+                    
+                    <div class="mb-6">
+                        <h3 class="text-lg font-semibold text-neutral-800 mb-4">最新文章</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden card-transition hover:shadow-card-hover cursor-pointer">
+                                <div class="flex flex-col md:flex-row">
+                                    <img src="./6c379258c94ef431953690f036d80b8b.mp4" alt="金银花种植技术" class="w-full md:w-40 h-40 object-cover">
+                                    <div class="p-4 flex-grow">
+                                        <div class="flex items-center mb-2">
+                                            <span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">种植技术</span>
+                                            <span class="ml-2 text-xs text-neutral-500">2025-05-10</span>
+                                        </div>
+                                        <h4 class="font-medium text-neutral-800 mb-2">金银花高效种植技巧与管理方法</h4>
+                                        <p class="text-sm text-neutral-600 mb-3 line-clamp-2">本文详细介绍了金银花的高效种植技术，包括土壤选择、播种时间、施肥管理和病虫害防治等方面的专业知识，帮助农户提高金银花的产量和品质...</p>
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center">
+                                                <img src="https://picsum.photos/seed/author1/40/40" alt="作者头像" class="w-8 h-8 rounded-full mr-2">
+                                                <span class="text-xs text-neutral-500">李教授</span>
+                                            </div>
+                                            <span class="text-xs text-neutral-500">
+                                                <i class="fa fa-eye mr-1"></i> 1248
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden card-transition hover:shadow-card-hover cursor-pointer">
+                                <div class="flex flex-col md:flex-row">
+                                    <img src="https://picsum.photos/seed/article2/400/300" alt="智能农业设备" class="w-full md:w-40 h-40 object-cover">
+                                    <div class="p-4 flex-grow">
+                                        <div class="flex items-center mb-2">
+                                            <span class="bg-secondary/10 text-secondary text-xs px-2 py-1 rounded-full">设备使用</span>
+                                            <span class="ml-2 text-xs text-neutral-500">2025-05-08</span>
+                                        </div>
+                                        <h4 class="font-medium text-neutral-800 mb-2">智能农业设备的选型与应用指南</h4>
+                                        <p class="text-sm text-neutral-600 mb-3 line-clamp-2">如何选择适合自己农场的智能传感器和灌溉系统？本文从实际应用角度出发，为您提供专业的设备选型建议，以及安装、调试和日常维护的实用技巧...</p>
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center">
+                                                <img src="https://picsum.photos/seed/author2/40/40" alt="作者头像" class="w-8 h-8 rounded-full mr-2">
+                                                <span class="text-xs text-neutral-500">王工程师</span>
+                                            </div>
+                                            <span class="text-xs text-neutral-500">
+                                                <i class="fa fa-eye mr-1"></i> 965
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden card-transition hover:shadow-card-hover cursor-pointer">
+                                <div class="flex flex-col md:flex-row">
+                                    <img src="https://picsum.photos/seed/article3/400/300" alt="病虫害防治" class="w-full md:w-40 h-40 object-cover">
+                                    <div class="p-4 flex-grow">
+                                        <div class="flex items-center mb-2">
+                                            <span class="bg-primary/10 text-primary text-xs px-2 py-1 rounded-full">病虫害防治</span>
+                                            <span class="ml-2 text-xs text-neutral-500">2025-05-05</span>
+                                        </div>
+                                        <h4 class="font-medium text-neutral-800 mb-2">金银花常见病虫害识别与绿色防控技术</h4>
+                                        <p class="text-sm text-neutral-600 mb-3 line-clamp-2">本文介绍了金银花常见病虫害的识别方法和绿色防控技术，包括蚜虫、白粉病、炭疽病等病虫害的防治措施，倡导使用生物防治和物理防治方法，减少化学农药的使用...</p>
+                                        <div class="flex justify-between items-center">
+                                            <div class="flex items-center">
+                                                <img src="https://picsum.photos/seed/author3/40/40" alt="作者头像" class="w-8 h-8 rounded-full mr-2">
+                                                <span class="text-xs text-neutral-500">张技术员</span>
+                                            </div>
+                                            <span class="text-xs text-neutral-500">
+                                                <i class="fa fa-eye mr-1"></i> 872
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <h3 class="text-lg font-semibold text-neutral-800 mb-4">视频教程</h3>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden card-transition hover:shadow-card-hover cursor-pointer">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/video1/400/225" alt="金银花种植视频教程" class="w-full h-48 object-cover">
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <div class="w-14 h-14 bg-white/80 rounded-full flex items-center justify-center">
+                                            <i class="fa fa-play text-primary text-xl"></i>
+                                        </div>
+                                    </div>
+                                    <div class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                                        12:35
+                                    </div>
+                                </div>
+                                <div class="p-4">
+                                    <h4 class="font-medium text-neutral-800 mb-1">金银花种植全流程详解</h4>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs text-neutral-500">
+                                            <i class="fa fa-calendar mr-1"></i> 2025-05-01
+                                        </span>
+                                        <span class="text-xs text-neutral-500">
+                                            <i class="fa fa-eye mr-1"></i> 753
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white rounded-xl shadow-card overflow-hidden card-transition hover:shadow-card-hover cursor-pointer">
+                                <div class="relative">
+                                    <img src="https://picsum.photos/seed/video2/400/225" alt="传感器安装教程" class="w-full h-48 object-cover">
+                                    <div class="absolute inset-0 flex items-center justify-center">
+                                        <div class="w-14 h-14 bg-white/80 rounded-full flex items-center justify-center">
+                                            <i class="fa fa-play text-primary text-xl"></i>
+                                        </div>
+                                    </div>
+                                    <div class="absolute bottom-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded">
+                                        08:42
+                                    </div>
+                                </div>
+                                <div class="p-4">
+                                    <h4 class="font-medium text-neutral-800 mb-1">智能传感器安装与调试教程</h4>
+                                    <div class="flex justify-between items-center">
+                                        <span class="text-xs text-neutral-500">
+                                            <i class="fa fa-calendar mr-1"></i> 2025-04-28
+                                        </span>
+                                        <span class="text-xs text-neutral-500">
+                                            <i class="fa fa-eye mr-1"></i> 631
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 个人中心页面 -->
+            <div id="profile-page" class="hidden container mx-auto px-4 py-6">
+                <div class="mb-6">
+                    <button id="back-to-home-profile" class="flex items-center text-neutral-600 hover:text-primary mb-4 transition-colors">
+                        <i class="fa fa-arrow-left mr-2"></i>
+                        <span>返回首页</span>
+                    </button>
+                    
+                    <div class="bg-white rounded-xl shadow-card overflow-hidden mb-6">
+                        <div class="h-32 bg-primary/20 relative">
+                            <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent h-16"></div>
+                        </div>
+                        
+                        <div class="px-6 -mt-16">
+                            <div class="flex justify-between items-end">
+                                <div class="flex items-end">
+                                    <div class="w-24 h-24 rounded-full border-4 border-white overflow-hidden">
+                                        <img src="https://picsum.photos/seed/profile/200/200" alt="用户头像" class="w-full h-full object-cover">
+                                    </div>
+                                    <div class="ml-4 mb-2">
+                                        <h3 class="text-xl font-bold text-neutral-800">王师傅</h3>
+                                        <p class="text-neutral-600">高级种植技术员</p>
+                                    </div>
+                                </div>
+                                <button class="btn-primary mb-2">
+                                    <i class="fa fa-edit mr-1"></i>编辑
+                                </button>
+                            </div>
+                            
+                            <div class="mt-6 pt-6 border-t border-neutral-200">
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                    <div class="text-center">
+                                        <p class="text-2xl font-bold text-neutral-800">4</p>
+                                        <p class="text-sm text-neutral-600">种植作物</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-2xl font-bold text-neutral-800">7</p>
+                                        <p class="text-sm text-neutral-600">传感器</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-2xl font-bold text-neutral-800">5</p>
+                                        <p class="text-sm text-neutral-600">已购课程</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-2xl font-bold text-neutral-800">12</p>
+                                        <p class="text-sm text-neutral-600">培训记录</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-4 mb-6">
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fa fa-phone text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-neutral-500">手机号</p>
+                                            <p class="text-neutral-800">138****5678</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-secondary/10 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fa fa-envelope text-secondary"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-neutral-500">邮箱</p>
+                                            <p class="text-neutral-800">example@mail.com</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center">
+                                        <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                                            <i class="fa fa-map-marker text-primary"></i>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm text-neutral-500">位置</p>
+                                            <p class="text-neutral-800">山东省临沂市</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-card p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-neutral-800 mb-4">已购知识产品</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex items-center p-3 bg-neutral-50 rounded-lg">
+                                <img src="https://picsum.photos/seed/product1/60/60" alt="金银花种植技术" class="w-16 h-16 rounded-lg object-cover mr-4">
+                                <div class="flex-grow">
+                                    <h4 class="font-medium text-neutral-800">金银花高效种植技术指南</h4>
+                                    <p class="text-sm text-neutral-500">购买时间: 2025-04-15</p>
+                                </div>
+                                <button class="text-primary hover:text-primary-dark transition-colors">
+                                    <i class="fa fa-book-open"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="flex items-center p-3 bg-neutral-50 rounded-lg">
+                                <img src="https://picsum.photos/seed/product2/60/60" alt="智能农业系统" class="w-16 h-16 rounded-lg object-cover mr-4">
+                                <div class="flex-grow">
+                                    <h4 class="font-medium text-neutral-800">智能农业系统应用与管理</h4>
+                                    <p class="text-sm text-neutral-500">购买时间: 2025-04-22</p>
+                                </div>
+                                <button class="text-primary hover:text-primary-dark transition-colors">
+                                    <i class="fa fa-book-open"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white rounded-xl shadow-card p-6 mb-6">
+                        <h3 class="text-lg font-semibold text-neutral-800 mb-4">最近培训记录</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="p-3 bg-neutral-50 rounded-lg">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-medium text-neutral-800">金银花病虫害防治技术培训</h4>
+                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">已完成</span>
+                                </div>
+                                <p class="text-sm text-neutral-600 mb-2">本次培训详细介绍了金银花常见病虫害的识别与防治方法，包括生物防治、物理防治和化学防治等多种手段...</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-neutral-500">2025-05-10</span>
+                                    <button class="text-primary hover:text-primary-dark transition-colors text-sm">查看详情</button>
+                                </div>
+                            </div>
+                            
+                            <div class="p-3 bg-neutral-50 rounded-lg">
+                                <div class="flex justify-between items-center mb-2">
+                                    <h4 class="font-medium text-neutral-800">智能灌溉系统操作与维护</h4>
+                                    <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">已完成</span>
+                                </div>
+                                <p class="text-sm text-neutral-600 mb-2">本次培训主要讲解了智能灌溉系统的工作原理、操作方法和日常维护要点，帮助农户更好地使用和管理智能灌溉设备...</p>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs text-neutral-500">2025-05-03</span>
+                                    <button class="text-primary hover:text-primary-dark transition-colors text-sm">查看详情</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button id="logout-btn" class="w-full bg-red-500 hover:bg-red-600 text-white font-medium py-3 px-4 rounded-lg transition-all duration-300 shadow-md hover:shadow-lg">
+                        <i class="fa fa-sign-out mr-2"></i>退出登录
+                    </button>
+                </div>
+            </div>
+        </main>
+        
+        <!-- 底部导航栏 -->
+        <nav class="fixed bottom-0 left-0 right-0 bg-white shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-10">
+            <div class="flex justify-around">
+                <button id="nav-home" class="nav-item nav-item-active">
+                    <i class="fa fa-home text-xl mb-1"></i>
+                    <span class="text-xs">首页</span>
+                </button>
+                <button id="nav-sensors" class="nav-item">
+                    <i class="fa fa-microchip text-xl mb-1"></i>
+                    <span class="text-xs">传感器</span>
+                </button>
+                <button id="nav-irrigation" class="nav-item">
+                    <i class="fa fa-tint text-xl mb-1"></i>
+                    <span class="text-xs">浇灌</span>
+                </button>
+                <button id="nav-knowledge" class="nav-item">
+                    <i class="fa fa-book text-xl mb-1"></i>
+                    <span class="text-xs">知识</span>
+                </button>
+                <button id="nav-profile" class="nav-item">
+                    <i class="fa fa-user text-xl mb-1"></i>
+                    <span class="text-xs">我的</span>
+                </button>
+            </div>
+        </nav>
+    </div>
+    
+    <script>
+        // 设置当前日期
+        document.addEventListener('DOMContentLoaded', function() {
+            const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+            const currentDate = new Date().toLocaleDateString('zh-CN', dateOptions);
+            document.getElementById('current-date').textContent = currentDate;
+            
+            // 初始化环境数据图表
+            if (typeof Chart !== 'undefined') {
+                const ctx = document.getElementById('environment-chart');
+                if (ctx) {
+                    new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '现在'],
+                            datasets: [
+                                {
+                                    label: '温度 (°C)',
+                                    data: [22, 20, 23, 28, 27, 25, 25],
+                                    borderColor: '#4CAF50',
+                                    backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                },
+                                {
+                                    label: '湿度 (%)',
+                                    data: [70, 75, 72, 60, 58, 62, 65],
+                                    borderColor: '#4FC3F7',
+                                    backgroundColor: 'rgba(79, 195, 247, 0.1)',
+                                    tension: 0.4,
+                                    fill: true
+                                }
+                            ]
+                        },
+                        options: {
+                            responsive: true,
+                            plugins: {
+                                legend: {
+                                    position: 'top',
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    beginAtZero: false,
+                                    grid: {
+                                        color: 'rgba(0, 0, 0, 0.05)'
+                                    }
+                                },
+                                x: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // 登录按钮点击事件
+            document.getElementById('login-btn').addEventListener('click', function() {
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('app').classList.remove('hidden');
+            });
+            
+            // 注册链接点击事件
+            document.getElementById('register-link').addEventListener('click', function() {
+                document.getElementById('login-page').classList.add('hidden');
+                document.getElementById('register-page').classList.remove('hidden');
+            });
+            
+            // 登录链接点击事件
+            document.getElementById('login-link').addEventListener('click', function() {
+                document.getElementById('register-page').classList.add('hidden');
+                document.getElementById('login-page').classList.remove('hidden');
+            });
+            
+            // 注册按钮点击事件
+            document.getElementById('register-btn').addEventListener('click', function() {
+                document.getElementById('register-page').classList.add('hidden');
+                document.getElementById('login-page').classList.remove('hidden');
+                // 显示注册成功提示（实际项目中应该有更完善的提示机制）
+                alert('注册成功！请使用您的账号登录。');
+            });
+            
+            // 返回首页按钮事件
+            document.getElementById('back-to-home').addEventListener('click', function() {
+                navigateTo('home');
+            });
+            
+            document.getElementById('back-to-home-sensors').addEventListener('click', function() {
+                navigateTo('home');
+            });
+            
+            document.getElementById('back-to-home-irrigation').addEventListener('click', function() {
+                navigateTo('home');
+            });
+            
+            document.getElementById('back-to-home-knowledge').addEventListener('click', function() {
+                navigateTo('home');
+            });
+            
+            document.getElementById('back-to-home-profile').addEventListener('click', function() {
+                navigateTo('home');
+            });
+            
+            // 退出登录按钮事件
+            document.getElementById('logout-btn').addEventListener('click', function() {
+                document.getElementById('app').classList.add('hidden');
+                document.getElementById('login-page').classList.remove('hidden');
+            });
+            
+            // 底部导航栏点击事件
+            document.getElementById('nav-home').addEventListener('click', function() {
+                navigateTo('home');
+            });
+            
+            document.getElementById('nav-sensors').addEventListener('click', function() {
+                navigateTo('sensors');
+            });
+            
+            document.getElementById('nav-irrigation').addEventListener('click', function() {
+                navigateTo('irrigation');
+            });
+            
+            document.getElementById('nav-knowledge').addEventListener('click', function() {
+                navigateTo('knowledge');
+            });
+            
+            document.getElementById('nav-profile').addEventListener('click', function() {
+                navigateTo('profile');
+            });
+        });
+        
+        // 页面导航函数
+        function navigateTo(page) {
+            // 隐藏所有页面
+            document.getElementById('home-page').classList.add('hidden');
+            document.getElementById('crop-detail-page').classList.add('hidden');
+            document.getElementById('sensors-page').classList.add('hidden');
+            document.getElementById('irrigation-page').classList.add('hidden');
+            document.getElementById('knowledge-page').classList.add('hidden');
+            document.getElementById('profile-page').classList.add('hidden');
+            
+            // 重置导航栏状态
+            document.getElementById('nav-home').classList.remove('nav-item-active');
+            document.getElementById('nav-sensors').classList.remove('nav-item-active');
+            document.getElementById('nav-irrigation').classList.remove('nav-item-active');
+            document.getElementById('nav-knowledge').classList.remove('nav-item-active');
+            document.getElementById('nav-profile').classList.remove('nav-item-active');
+            
+            // 显示目标页面并激活对应的导航项
+            if (page === 'home') {
+                document.getElementById('home-page').classList.remove('hidden');
+                document.getElementById('nav-home').classList.add('nav-item-active');
+            } else if (page === 'crop-detail') {
+                document.getElementById('crop-detail-page').classList.remove('hidden');
+            } else if (page === 'sensors') {
+                document.getElementById('sensors-page').classList.remove('hidden');
+                document.getElementById('nav-sensors').classList.add('nav-item-active');
+            } else if (page === 'irrigation') {
+                document.getElementById('irrigation-page').classList.remove('hidden');
+                document.getElementById('nav-irrigation').classList.add('nav-item-active');
+            } else if (page === 'knowledge') {
+                document.getElementById('knowledge-page').classList.remove('hidden');
+                document.getElementById('nav-knowledge').classList.add('nav-item-active');
+            } else if (page === 'profile') {
+                document.getElementById('profile-page').classList.remove('hidden');
+                document.getElementById('nav-profile').classList.add('nav-item-active');
+            }
+            
+            // 滚动到页面顶部
+            window.scrollTo(0, 0);
+        }
+    </script>
+</body>
+</html>
+    
